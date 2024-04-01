@@ -1,5 +1,7 @@
 dataset/
 dataset_aug/
+dataset_aug_ori/
+dataset_ori/
 train/
 train_aug/
 val/
