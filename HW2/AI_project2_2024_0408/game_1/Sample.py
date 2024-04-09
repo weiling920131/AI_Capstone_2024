@@ -1,6 +1,50 @@
 import STcpClient
 import numpy as np
 import random
+import threading
+
+num_threads = 4
+num_simulations = 10000
+
+class Node:
+    def __init__(self):
+        self.num_visits = 0
+        self.parent_player_value_sum = 0.0
+        self.current_player_value_sum = 0.0
+        self.children = []
+
+class MCTS:
+    def __init__(self):
+        self.threads = []
+        self.roots = list([Node()] * num_threads)
+
+        for i in range(num_threads):
+            thread = threading.Thread(target=self.run, args=(i))
+            self.threads.append(thread)
+
+        for thread in self.threads:
+            thread.start()
+
+        for thread in self.threads:
+            thread.join()
+
+    def run(self, threadID):
+        for _ in range(num_simulations):
+            self.simulation(self.roots[threadID])
+
+    def simulation(self, root):
+        self.select()
+        self.evaluate()
+        self.update()
+
+    def select(self):
+        pass
+
+    def evaluate(self):
+        pass
+
+    def update(self):
+        pass
 
 '''
     選擇起始位置

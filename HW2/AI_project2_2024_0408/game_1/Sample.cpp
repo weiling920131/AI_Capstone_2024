@@ -26,6 +26,10 @@ std::vector<std::vector<int>> legal_steps(int playerID, int mapStat[12][12], int
 	return legal_steps;
 }
 
+bool is_terminal() {
+
+}
+
 class Node {
 public:
 	Node(): num_visit(0), value(0) {}
@@ -43,27 +47,29 @@ public:
 
 	void init() {
 		std::vector<std::thread> threads;
-		for (int i = 0; i < num_threads; i++) {
-			threads.emplace_back(run_thread);
+		roots.resize(num_threads);
+		for (int threadID = 0; threadID < num_threads; threadID++) {
+			threads.emplace_back(run_thread, threadID);
 		}
 		for (auto& thread : threads) {
 			thread.join();
 		}
 	}
 
-	void run_thread() {
+	void run_thread(int threadID) {
 		for (int i = 0; i < num_simulations; i++) {
-			simulation();
+			simulation(roots[threadID]);
 		}
 	}
 
-	void simulation() {
+	void simulation(Node* root) {
 
 	}
-	
+
 	void select() {}
 	void evaluate() {}
 	void update() {}
+	std::vector<Node*> roots;
 };
 
 /*
