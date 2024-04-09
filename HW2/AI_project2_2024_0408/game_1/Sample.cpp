@@ -8,6 +8,24 @@
 int num_threads = 4;
 int num_simulations = 10;
 
+std::vector<std::vector<int>> legal_steps(int playerID, int mapStat[12][12], int sheepStat[12][12]){
+	std::vector<std::vector<int>> legal_steps;
+	std::vector<std::vector<int>> dir_move = {{}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}};
+	for(int i=0;i<12;i++){
+		for(int j=0;j<12;j++){
+			if(mapStat[i][j] == playerID && sheepStat[i][j] > 1){
+				for(int dir = 1;dir<=9;dir++){
+					if (dir == 5) continue;
+					for(int m = 1;m<sheepStat[i][j];m++){
+
+					}
+				}
+			}
+		}
+	}
+	return legal_steps;
+}
+
 class Node {
 public:
 	Node(): num_visit(0), value(0) {}
