@@ -1,3 +1,8 @@
+'''
+py to exe:
+pyinstaller --onefile --name agent1 Sample.py
+'''
+
 import STcpClient
 import numpy as np
 import random
