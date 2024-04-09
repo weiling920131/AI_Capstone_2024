@@ -10,14 +10,17 @@ int num_simulations = 10;
 
 std::vector<std::vector<int>> legal_steps(int playerID, int mapStat[12][12], int sheepStat[12][12]){
 	std::vector<std::vector<int>> legal_steps;
-	std::vector<std::vector<int>> dir_move = {{}, {0, -1}, {1, -1}, {1, 0}, {1, 1}, {}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}};
+	std::vector<std::vector<int>> dir_move = {{}, {-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {}, {1, 0}, {-1, 1}, {0, 1}, {1, 1}}; // 8 directions
 	for(int i=0;i<12;i++){
 		for(int j=0;j<12;j++){
-			if(mapStat[i][j] == playerID && sheepStat[i][j] > 1){
-				for(int dir = 1;dir<=9;dir++){
+			if(mapStat[i][j] == playerID && sheepStat[i][j] > 1){ // if this player has more than 1 sheep
+				for(int dir = 1;dir<=9;dir++){ 
 					if (dir == 5) continue;
-					for(int m = 1;m<sheepStat[i][j];m++){
-
+					int x = i + dir_move[dir][0], y = j + dir_move[dir][1];
+					if(mapStat[x][y] == 0 && x>=0 && x<12 && y>=0 && y<12){ // walk through the direction until meet the wall or other player's sheep
+						for(int m = 1;m<sheepStat[i][j];m++){ // split the sheep
+							legal_steps.push_back({x, y, m, dir});
+						}
 					}
 				}
 			}
