@@ -5,6 +5,21 @@ import threading
 
 num_threads = 4
 num_simulations = 10000
+boardSize = 12
+
+def legalSteps(playerID, mapStat, sheepStat):
+    legalSteps = []
+    dirMove = {1:[-1, -1], 2:[0, -1], 3:[1, -1], 4:[-1, 0], 6:[1, 0], 7:[-1, 1], 8:[0, 1], 9:[1, 1]}
+    for i in range(boardSize):
+        for j in range(boardSize):
+            if mapStat[i][j] == playerID and sheepStat[i][j] > 1:
+                for dir, move in dirMove.items():
+                    x = i + move[0]
+                    y = j + move[1]
+                    if x >= 0 and x < boardSize and y >= 0 and y < boardSize and mapStat[x][y] == 0:
+                        for m in range(1, sheepStat[i][j]):
+                            legalSteps.append([(x, y), m, dir])
+    return legalSteps
 
 class Node:
     def __init__(self):
@@ -46,21 +61,6 @@ class MCTS:
     def update(self):
         pass
 
-boardSize = 12
-
-def legalSteps(playerID, mapStat, sheepStat):
-    legalSteps = []
-    dirMove = {1:[-1, -1], 2:[0, -1], 3:[1, -1], 4:[-1, 0], 6:[1, 0], 7:[-1, 1], 8:[0, 1], 9:[1, 1]}
-    for i in range(boardSize):
-        for j in range(boardSize):
-            if mapStat[i][j] == playerID and sheepStat[i][j] > 1:
-                for dir, move in dirMove.items():
-                    x = i + move[0]
-                    y = j + move[1]
-                    if x >= 0 and x < boardSize and y >= 0 and y < boardSize and mapStat[x][y] == 0:
-                        for m in range(1, sheepStat[i][j]):
-                            legalSteps.append([(x, y), m, dir])
-    return legalSteps
 
 
 '''
