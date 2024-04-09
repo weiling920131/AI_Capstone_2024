@@ -3,10 +3,14 @@
 #include <stdlib.h>
 #include <iostream>
 #include <vector>
+#include <thread>
+
+int num_threads = 4;
+int num_simulations = 10;
 
 class Node {
 public:
-	Node(): num_visit(0), value(0) {};
+	Node(): num_visit(0), value(0) {}
 	~Node() = default;
 
 	int num_visit;
@@ -16,12 +20,32 @@ public:
 
 class MCTS {
 public:
-	MCTS() {};
+	MCTS() {}
 	~MCTS() = default;
 
-private:
+	void init() {
+		std::vector<std::thread> threads;
+		for (int i = 0; i < num_threads; i++) {
+			threads.emplace_back(run_thread);
+		}
+		for (auto& thread : threads) {
+			thread.join();
+		}
+	}
 
+	void run_thread() {
+		for (int i = 0; i < num_simulations; i++) {
+			simulation();
+		}
+	}
 
+	void simulation() {
+
+	}
+	
+	void select() {}
+	void evaluate() {}
+	void update() {}
 };
 
 /*
