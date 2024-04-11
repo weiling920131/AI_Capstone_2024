@@ -93,7 +93,7 @@ def applyStep(playerID, mapStat, sheepStat, step):
     if len(step) == 2:  #initPos
         [y, x] = step
         if mapStat[y][x] != 0 or sheepStat[y][x] != 0: 
-            print("error1")
+            print("applyStep: error1")
             return False
         mapStat[y][x] = playerID
         sheepStat[y][x] = sheepNum
@@ -105,10 +105,10 @@ def applyStep(playerID, mapStat, sheepStat, step):
     move = dirMove[dir]
 
     if m >= sheepStat[y][x] or m <= 0: 
-        print("error2")
+        print("applyStep: error2")
         return False
     if mapStat[y + move[1]][x + move[0]] != 0: 
-        print("error3")
+        print("applyStep: error3")
         return False
 
     sheepStat[y][x] -= m
@@ -191,12 +191,14 @@ class MCTS:
             best_score = -np.inf
             selected_node = None
             for child in leaf_node.children:
-                # if child.num_visits == 0:
-                #     score = np.inf
-                # else:
-                q = child.value_sum / child.num_visits if child.num_visits != 0 else np.inf
-                u = C_PUCT * np.sqrt(np.log(root.num_visits) / child.num_visits)
-                score = q + u
+                # q = leaf_node.value_sum / child.num_visits if child.num_visits != 0 else leaf_node.value_sum / leaf_node.num_visits
+                # u = C_PUCT * child.policy * np.sqrt(leaf_node.num_visits) / (1 + child.num_visits)
+                if child.num_visits == 0:
+                    score = np.inf
+                else:
+                    q = child.value_sum / child.num_visits
+                    u = C_PUCT * np.sqrt(np.log(root.num_visits) / child.num_visits)
+                    score = q + u
 
                 if score > best_score:
                     best_score = score
@@ -205,19 +207,11 @@ class MCTS:
             if selected_node != None:
                 leaf_node = selected_node
                 if not applyStep(leaf_node.playerID, leaf_mapStat, leaf_sheepStat, leaf_node.chosen_step):
-                    print("ERROR: applyStep1")
-                    print(leaf_node.playerID)
-                    print(leaf_mapStat)
-                    print(leaf_sheepStat)
-                    print(leaf_node.chosen_step)
-                    exit()
-                    return "error"
+                    return
                 
         leaf_node.num_visits += 1
 
         if isTerminal(leaf_mapStat, leaf_sheepStat):
-            # leaf_node.policy = leaf_node.num_visits / root.num_visits
-            # leaf_node.value += getValue(self.playerID, leaf_mapStat)
             self.update(root, leaf_node, leaf_mapStat)
             return
 
@@ -238,13 +232,7 @@ class MCTS:
             leaf_node.num_visits += 1
 
             if not applyStep(leaf_node.playerID, leaf_mapStat, leaf_sheepStat, leaf_node.chosen_step):
-                print("ERROR: applyStep2")
-                print(leaf_node.playerID)
-                print(leaf_mapStat)
-                print(leaf_sheepStat)
-                print(leaf_node.chosen_step)
-                exit()
-                return "error"
+                return
 
         cur_player = leaf_node.playerID
         while not isTerminal(leaf_mapStat, leaf_sheepStat):
@@ -253,13 +241,7 @@ class MCTS:
             if len(legalsteps) > 0:
                 step = random.choice(legalsteps)
                 if not applyStep(cur_player, leaf_mapStat, leaf_sheepStat, step):
-                    print("ERROR: applyStep3")
-                    print(cur_player)
-                    print(leaf_mapStat)
-                    print(leaf_sheepStat)
-                    print(legalsteps[0])
-                    exit()
-                    return "error"
+                    return
         
         self.update(root, leaf_node, leaf_mapStat)
         return
