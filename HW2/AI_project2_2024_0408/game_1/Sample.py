@@ -7,15 +7,16 @@ import STcpClient
 import numpy as np
 import random
 import threading
+import time
 
 num_threads = 4
 num_simulations = 50
+# time_threshold = 2.5
 boardSize = 12
 sheepNum = 16
 C_PUCT = 1.5
 tensor_shape = [1+2+2, boardSize, boardSize] # 1: wall, 2: me and others, 2: my sheep and others'
 num_distinct_actions = (sheepNum - 1) * 8
-# EPS = np.finfo(float).eps
 
 def legalSteps(playerID, mapStat, sheepStat):
     legalSteps = []
@@ -95,7 +96,7 @@ def applyStep(playerID, mapStat, sheepStat, step):
             print("error1")
             return False
         mapStat[y][x] = playerID
-        sheepStat[y][x] = 16
+        sheepStat[y][x] = sheepNum
         return True
 
     [(y, x), m, dir] = step
@@ -122,7 +123,7 @@ def applyStep(playerID, mapStat, sheepStat, step):
 
 
 class Node:
-    def __init__(self, chosen_step = [], parent = None, playerID = 0):
+    def __init__(self, playerID, chosen_step = [], parent = None):
         self.num_visits = 0
         self.value_sum = 0.0
         self.policy = 0.0
@@ -159,7 +160,7 @@ class MCTS:
         self.roots = []
 
         for threadID in range(num_threads):
-            self.roots.append(Node())
+            self.roots.append(Node(playerID - 1))
             thread = threading.Thread(target=self.run, args=(threadID,))
             self.threads.append(thread)
             thread.start()
@@ -168,8 +169,12 @@ class MCTS:
             thread.join()
 
     def run(self, threadID):
-        for i in range(num_simulations):
+        # start = time.perf_counter()
+        for _ in range(num_simulations):
             self.simulation(self.roots[threadID])
+            # end = time.perf_counter()
+            # if (end - start) >= time_threshold:
+            #     break
 
     def simulation(self, root):
         leaf_node = root
@@ -219,7 +224,7 @@ class MCTS:
         # expand
         legalsteps = legalSteps(leaf_node.playerID % 4 + 1, leaf_mapStat, leaf_sheepStat)
         for step in legalsteps:
-            leaf_node.children.append(Node(step, leaf_node, leaf_node.playerID % 4 + 1))
+            leaf_node.children.append(Node(leaf_node.playerID % 4 + 1, step, leaf_node))
 
         # rollout
         self.evaluate(root, leaf_node, leaf_mapStat, leaf_sheepStat)
@@ -291,7 +296,7 @@ class MCTS:
 def InitPos(mapStat, playerID):
     init_pos = [0, 0]
     mapStat = mapStat.astype(int)
-    sheepStat = np.zeros((12, 12), dtype=int)
+    sheepStat = np.zeros((boardSize, boardSize), dtype=int)
     mcts = MCTS(playerID, mapStat, sheepStat)
     init_pos = mcts.getStep()
 
