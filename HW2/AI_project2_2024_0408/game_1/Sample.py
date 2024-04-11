@@ -11,7 +11,10 @@ import threading
 num_threads = 4
 num_simulations = 50
 boardSize = 12
+sheepNum = 16
 C_PUCT = 1.5
+tensor_shape = [1+2+2, boardSize, boardSize] # 1: wall, 2: me and others, 2: my sheep and others'
+num_distinct_actions = (sheepNum - 1) * 8
 # EPS = np.finfo(float).eps
 
 def legalSteps(playerID, mapStat, sheepStat):
@@ -127,6 +130,24 @@ class Node:
         self.parent = parent
         self.children = []
         self.playerID = playerID
+        # weiling add 
+        self.mapStat = np.zeros((boardSize, boardSize), dtype=int)
+        self.sheepStat = np.zeros((boardSize, boardSize), dtype=int)
+        # weiling add
+    
+    # weiling add
+    def observation_tensor(self):
+        tensor = np.zeros(tensor_shape, dtype=int)
+        tensor[0][self.mapStat == -1] = 1
+        tensor[1][self.mapStat == self.playerID] = 1
+        tensor[2][self.mapStat != self.playerID] = 1
+        tensor[3] = [self.sheepStat[i][j]  for i in range(boardSize) for j in range(boardSize) if self.mapStat[i][j] == self.playerID]
+        tensor[4] = [self.sheepStat[i][j]  for i in range(boardSize) for j in range(boardSize) if self.mapStat[i][j] != self.playerID]
+        return tensor
+
+
+    # weiling add
+
 
 class MCTS:
     def __init__(self, playerID, mapStat, sheepStat):
@@ -161,16 +182,16 @@ class MCTS:
     def select(self, root, leaf_node, leaf_mapStat, leaf_sheepStat):
         while len(leaf_node.children) != 0:
             leaf_node.num_visits += 1
-
+    
             best_score = -np.inf
             selected_node = None
             for child in leaf_node.children:
-                if child.num_visits == 0:
-                    score = np.inf
-                else:
-                    q = child.value_sum / child.num_visits
-                    u = C_PUCT * np.sqrt(np.log(root.num_visits) / child.num_visits)
-                    score = q + u
+                # if child.num_visits == 0:
+                #     score = np.inf
+                # else:
+                q = child.value_sum / child.num_visits if child.num_visits != 0 else np.inf
+                u = C_PUCT * np.sqrt(np.log(root.num_visits) / child.num_visits)
+                score = q + u
 
                 if score > best_score:
                     best_score = score
