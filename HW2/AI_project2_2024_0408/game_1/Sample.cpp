@@ -1,4 +1,4 @@
-// g++ -o dist/agent1_cpp.exe Sample.cpp -lws2_32
+// g++ -o agent1_cpp.exe Sample.cpp -lws2_32
 
 #include "STcpClient.h"
 #include <stdlib.h>
@@ -255,14 +255,13 @@ public:
 		auto start = std::chrono::steady_clock::now();
 		int i;
 		for (i = 0; i < num_simulations; i++) {
-			// std::cout << "sim: " << i << '\n';
 			simulation(roots[threadID]);
 			auto end = std::chrono::steady_clock::now();
 			if (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() >= time_threshold) {
 				break;
 			}
 		}
-		std::cout << "sim: " << i << '\n';
+		// std::cout << "sim: " << i << '\n';
 	}
 
 	void simulation(Node* root) {
