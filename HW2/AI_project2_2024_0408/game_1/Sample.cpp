@@ -32,9 +32,6 @@ struct VectorHash {
     }
 };
 
-std::vector<int> tensor_shape = {1+2+2, boardSize, boardSize}; // 1: wall, 2: me and others, 2: my sheep and others'
-int num_distinct_actions = (sheepNum - 1) * 8;
-
 std::vector<std::vector<int>> legalSteps(int playerID, std::vector<std::vector<int>> &mapStat, std::vector<std::vector<int>> &sheepStat) {
 	std::vector<std::vector<int>> legal_steps;
 	std::vector<std::vector<int>> dir_move = {{}, {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {}, {0, 1}, {1, -1}, {1, 0}, {1, 1}}; // 8 directions
@@ -148,7 +145,7 @@ bool applyStep(int playerID, std::vector<std::vector<int>> &mapStat, std::vector
         int y = step[0];
 		int x = step[1];
         if ((mapStat[y][x] != 0) || (sheepStat[y][x] != 0)) {
-            std::cout << "applyStep: error1" << '\n';
+            std::cout << "applyStep: error1\n";
             return false;
 		}
         mapStat[y][x] = playerID;
@@ -164,11 +161,11 @@ bool applyStep(int playerID, std::vector<std::vector<int>> &mapStat, std::vector
     std::vector<std::vector<int>> dir_move = {{}, {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {}, {0, 1}, {1, -1}, {1, 0}, {1, 1}}; // 8 directions
 
     if ((m >= sheepStat[y][x]) || (m <= 0)) {
-        std::cout << "applyStep: error2";
+        std::cout << "applyStep: error2\n";
         return false;
 	}
     if (mapStat[y + dir_move[dir][1]][x + dir_move[dir][0]] != 0) {
-        std::cout << "applyStep: error3";
+        std::cout << "applyStep: error3\n";
         return false;
 	}
 
@@ -197,26 +194,6 @@ public:
 	Node* parent = NULL;
 	std::vector<Node*> children;
 	int playerID;
-	// weiling add
-	int mapStat[12][12] = {0};
-	int sheepStat[12][12] = {0};
-
-	std::vector<std::vector<std::vector<int>>> observation_tensor() {
-		std::vector<std::vector<std::vector<int>>> tensor(tensor_shape[0], std::vector<std::vector<int>>(tensor_shape[1], std::vector<int>(tensor_shape[2], 0)));
-		for (int i = 0; i < tensor_shape[1]; i++) {
-			for (int j = 0; j < tensor_shape[2]; j++) {
-				if (mapStat[i][j] == -1) tensor[0][i][j] = 1;
-
-				if (mapStat[i][j] == playerID) tensor[1][i][j] = 1;
-				else tensor[2][i][j] = 1;
-
-				if (sheepStat[i][j] == playerID) tensor[3][i][j] = sheepStat[i][j];
-				else tensor[4][i][j] = sheepStat[i][j];
-			}
-		}
-		return tensor;
-	}
-	// weiling add
 };
 
 class MCTS {
