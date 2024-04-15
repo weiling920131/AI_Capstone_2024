@@ -191,8 +191,6 @@ class MCTS:
             best_score = -np.inf
             selected_node = None
             for child in leaf_node.children:
-                # q = leaf_node.value_sum / child.num_visits if child.num_visits != 0 else leaf_node.value_sum / leaf_node.num_visits
-                # u = C_PUCT * child.policy * np.sqrt(leaf_node.num_visits) / (1 + child.num_visits)
                 if child.num_visits == 0:
                     score = np.inf
                 else:
