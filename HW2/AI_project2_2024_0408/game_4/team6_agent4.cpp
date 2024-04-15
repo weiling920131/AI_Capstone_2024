@@ -1,5 +1,8 @@
-// g++ -o agent1_cpp.exe Sample.cpp -lws2_32
-
+// g++ -o agent4_cpp.exe Sample.cpp -lws2_32
+// team 6
+// 110550170 戚維凌
+// 110550034 孫承瑞
+// 110550175 鄭栩安
 #include "STcpClient.h"
 #include <stdlib.h>
 #include <iostream>
@@ -76,6 +79,7 @@ std::vector<std::vector<int>> legalSteps(int playerID, std::vector<std::vector<i
 					if (dir == 5) continue;
 					int y = i + dir_move[dir][1];
 					int x = j + dir_move[dir][0];
+
 					if ((x >= 0) && (x < boardSize) && (y >= 0) && (y < boardSize) && (mapStat[y][x] == 0)){ // walk through the direction until meet the wall or other player's sheep
 						for (int m = 1; m < sheepStat[i][j]; m++){ // split the sheep
 							legal_steps.push_back({i, j, m, dir});
@@ -329,7 +333,8 @@ public:
 	void update(Node* root, Node* leaf_node, std::vector<std::vector<int>> &leaf_mapStat) {
 		while (leaf_node->parent != NULL) {
 			leaf_node->policy = leaf_node->num_visits / root->num_visits;
-			leaf_node->value_sum += getValue(leaf_node->playerID, leaf_mapStat);
+			double score = getValue(leaf_node->playerID, leaf_mapStat) + getValue((leaf_node->playerID + 2) % 4, leaf_mapStat);
+			leaf_node->value_sum += score / 2;
 			leaf_node = leaf_node->parent;
 		}
 		return;

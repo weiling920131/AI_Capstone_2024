@@ -1,9 +1,9 @@
 1
-./sample/r1407.exe
+./sample/Sample_1.exe
 2
 ./dist/agent1.exe
 3
 ./sample/Sample_3.exe
-4
-./agent1_cpp.exe
+6
+./team6_agent1.exe
 1

@@ -1,5 +1,8 @@
-// g++ -o agent2_cpp.exe Sample.cpp -lws2_32
-
+// g++ -o agent3_cpp.exe Sample.cpp -lws2_32
+// team 6
+// 110550170 戚維凌
+// 110550034 孫承瑞
+// 110550175 鄭栩安
 #include "STcpClient.h"
 #include <stdlib.h>
 #include <iostream>
@@ -15,8 +18,8 @@
 int num_threads = 5;
 int num_simulations = 50000;
 int time_threshold = 2500;
-int boardSize = 15;
-int sheepNum = 32;
+int boardSize = 12;
+int sheepNum = 16;
 double C_PUCT = 1.5;
 
 std::random_device rd;
@@ -32,13 +35,13 @@ struct VectorHash {
     }
 };
 
-std::vector<std::vector<int>> legalSteps(int playerID, std::vector<std::vector<int>> &mapStat, std::vector<std::vector<int>> &sheepStat) {
+std::vector<std::vector<int>> legalSteps(int playerID, int curPlayerID, std::vector<std::vector<int>> &mapStat, std::vector<std::vector<int>> &sheepStat) {
 	std::vector<std::vector<int>> legal_steps;
 	std::vector<std::vector<int>> dir_move = {{}, {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {}, {0, 1}, {1, -1}, {1, 0}, {1, 1}}; // 8 directions
 	int cnt = 0;
 	for (int i = 0; i < boardSize; i++){
 		for (int j = 0; j < boardSize; j++){
-			if (mapStat[i][j] == playerID) {
+			if (mapStat[i][j] == curPlayerID) {
 				cnt++;
 			}
 		}
@@ -83,14 +86,26 @@ std::vector<std::vector<int>> legalSteps(int playerID, std::vector<std::vector<i
 					}
 				}
 			}
+			else if (mapStat[i][j] == curPlayerID && curPlayerID != playerID && cnt < sheepNum) {
+				for (int dir = 1; dir <= 9; dir++){ 
+					if (dir == 5) continue;
+					int y = i + dir_move[dir][1];
+					int x = j + dir_move[dir][0];
+					if ((x >= 0) && (x < boardSize) && (y >= 0) && (y < boardSize) && (mapStat[y][x] == 0)){ // walk through the direction until meet the wall or other player's sheep
+						for (int m = 1; m <= sheepNum - cnt; m++){ // split the sheep
+							legal_steps.push_back({i, j, m, dir});
+						}
+					}
+				}
+			}
 		}
 	}
 	return legal_steps;
 }
 
-bool isTerminal(std::vector<std::vector<int>> &mapStat, std::vector<std::vector<int>> &sheepStat) {
-	for (int playerID = 1; playerID <= 4; playerID++) {
-		if (legalSteps(playerID, mapStat, sheepStat).size() != 0) {
+bool isTerminal(int playerID, std::vector<std::vector<int>> &mapStat, std::vector<std::vector<int>> &sheepStat) {
+	for (int curPlayerID = 1; curPlayerID <= 4; curPlayerID++) {
+		if (legalSteps(playerID, curPlayerID, mapStat, sheepStat).size() != 0) {
 			return false;
 		}
 	}
@@ -140,7 +155,7 @@ double getValue(int playerID, std::vector<std::vector<int>> &mapStat) {
     return value;
 }
 
-bool applyStep(int playerID, std::vector<std::vector<int>> &mapStat, std::vector<std::vector<int>> &sheepStat, std::vector<int> step) {
+bool applyStep(int playerID, int curPlayerID, std::vector<std::vector<int>> &mapStat, std::vector<std::vector<int>> &sheepStat, std::vector<int> step) {
     if (step.size() == 2) {  // initPos
         int y = step[0];
 		int x = step[1];
@@ -148,8 +163,9 @@ bool applyStep(int playerID, std::vector<std::vector<int>> &mapStat, std::vector
             std::cout << "applyStep: error1\n";
             return false;
 		}
-        mapStat[y][x] = playerID;
-        sheepStat[y][x] = sheepNum;
+        mapStat[y][x] = curPlayerID;
+		if (curPlayerID == playerID)
+        	sheepStat[y][x] = sheepNum;
         return true;
 	}
 
@@ -160,7 +176,7 @@ bool applyStep(int playerID, std::vector<std::vector<int>> &mapStat, std::vector
 
     std::vector<std::vector<int>> dir_move = {{}, {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {}, {0, 1}, {1, -1}, {1, 0}, {1, 1}}; // 8 directions
 
-    if ((m >= sheepStat[y][x]) || (m <= 0)) {
+    if (((curPlayerID == playerID) && (m >= sheepStat[y][x])) || (m <= 0)) {
         std::cout << "applyStep: error2\n";
         return false;
 	}
@@ -169,14 +185,16 @@ bool applyStep(int playerID, std::vector<std::vector<int>> &mapStat, std::vector
         return false;
 	}
 
-    sheepStat[y][x] -= m;
+	if (curPlayerID == playerID)
+    	sheepStat[y][x] -= m;
     while ((y + dir_move[dir][1] >= 0) && (y + dir_move[dir][1] < boardSize) && (x + dir_move[dir][0] >= 0) && (x + dir_move[dir][0] < boardSize) && (mapStat[y + dir_move[dir][1]][x + dir_move[dir][0]] == 0)) {
         y += dir_move[dir][1];
         x += dir_move[dir][0];
 	}
 
-    mapStat[y][x] = playerID;
-    sheepStat[y][x] = m;
+    mapStat[y][x] = curPlayerID;
+	if (curPlayerID == playerID)
+    	sheepStat[y][x] = m;
 
     return true;
 }
@@ -193,12 +211,12 @@ public:
 	std::vector<int> chosen_step;
 	Node* parent = NULL;
 	std::vector<Node*> children;
-	int playerID;
+	int playerID;	// current player
 };
 
 class MCTS {
 public:
-	MCTS(int playerID_, int mapStat_[15][15], int sheepStat_[15][15]): playerID(playerID_) {
+	MCTS(int playerID_, int mapStat_[12][12], int sheepStat_[12][12]): playerID(playerID_) {
 		mapStat.resize(boardSize);
 		sheepStat.resize(boardSize);
 		for (int i = 0; i < boardSize; i++) {
@@ -211,7 +229,7 @@ public:
 	}
 	~MCTS() = default;
 
-	int playerID;
+	int playerID;	// real player
 	std::vector<std::vector<int>> mapStat;
 	std::vector<std::vector<int>> sheepStat;
 
@@ -276,18 +294,18 @@ public:
 				return;
 			}
 			leaf_node = select_node;
-			if (!applyStep(leaf_node->playerID, leaf_mapStat, leaf_sheepStat, leaf_node->chosen_step)) {
+			if (!applyStep(playerID, leaf_node->playerID, leaf_mapStat, leaf_sheepStat, leaf_node->chosen_step)) {
 				return;
 			}
 		}
 		leaf_node->num_visits++;
 
-		if (isTerminal(leaf_mapStat, leaf_sheepStat)) {
+		if (isTerminal(playerID, leaf_mapStat, leaf_sheepStat)) {
 			update(root, leaf_node, leaf_mapStat);
 			return;
 		}
 		// expand
-		std::vector<std::vector<int>> legal_steps = legalSteps(leaf_node->playerID % 4 + 1, leaf_mapStat, leaf_sheepStat);
+		std::vector<std::vector<int>> legal_steps = legalSteps(playerID, leaf_node->playerID % 4 + 1, leaf_mapStat, leaf_sheepStat);
 		for (auto& step: legal_steps) {
 			leaf_node->children.push_back(new Node(leaf_node->playerID % 4 + 1, step, leaf_node));
 		}
@@ -304,19 +322,19 @@ public:
 			leaf_node = leaf_node->children[r_idx];
 			leaf_node->num_visits++;
 
-			if (!applyStep(leaf_node->playerID, leaf_mapStat, leaf_sheepStat, leaf_node->chosen_step)) {
+			if (!applyStep(playerID, leaf_node->playerID, leaf_mapStat, leaf_sheepStat, leaf_node->chosen_step)) {
 				return;
 			}
 		}
 
 		int cur_player = leaf_node->playerID;
-		while (!isTerminal(leaf_mapStat, leaf_sheepStat)) {
+		while (!isTerminal(playerID, leaf_mapStat, leaf_sheepStat)) {
 			cur_player = cur_player % 4 + 1;
-			std::vector<std::vector<int>> legal_steps = legalSteps(cur_player, leaf_mapStat, leaf_sheepStat);
+			std::vector<std::vector<int>> legal_steps = legalSteps(playerID, cur_player, leaf_mapStat, leaf_sheepStat);
 			if (legal_steps.size() > 0) {
 				std::uniform_int_distribution<> dis(0, legal_steps.size() - 1);
     			int r_idx = dis(gen);
-				if (!applyStep(cur_player, leaf_mapStat, leaf_sheepStat, legal_steps[r_idx])) {
+				if (!applyStep(playerID, cur_player, leaf_mapStat, leaf_sheepStat, legal_steps[r_idx])) {
 					return;
 				}
 			}
@@ -360,12 +378,12 @@ public:
     init_pos=<x,y>,代表你要選擇的起始位置
     
 */
-std::vector<int> InitPos(int mapStat[15][15], int playerID)
+std::vector<int> InitPos(int mapStat[12][12], int playerID)
 {
 	std::vector<int> init_pos;
 	init_pos.resize(2);
 
-	int sheepStat[15][15] = {0};
+	int sheepStat[12][12] = {0};
 	MCTS mcts(playerID, mapStat, sheepStat);
 
 	init_pos = mcts.getStep();
@@ -378,9 +396,9 @@ std::vector<int> InitPos(int mapStat[15][15], int playerID)
     
     input: 
 	playerID: 你在此局遊戲中的角色(1~4)
-    mapStat : 棋盤狀態, 為 15*15矩陣, 
+    mapStat : 棋盤狀態, 為 12*12矩陣, 
 					0=可移動區域, -1=障礙, 1~4為玩家1~4佔領區域
-    sheepStat : 羊群分布狀態, 範圍在0~16, 為 15*15矩陣
+    sheepStat : 羊群分布狀態, 範圍在0~16, 為 12*12矩陣
 
     return Step
     Step : <x,y,m,dir> 
@@ -391,9 +409,8 @@ std::vector<int> InitPos(int mapStat[15][15], int playerID)
 			4 X 6
 			7 8 9
 */
-std::vector<int> GetStep(int playerID,int mapStat[15][15], int sheepStat[15][15])
+std::vector<int> GetStep(int playerID,int mapStat[12][12], int sheepStat[12][12])
 {
-
 	std::vector<int> step;
 	step.resize(4);
 
@@ -407,8 +424,8 @@ int main()
 {
 	int id_package;
 	int playerID;
-    int mapStat[15][15];
-    int sheepStat[15][15];
+    int mapStat[12][12];
+    int sheepStat[12][12];
 
 	// player initial
 	GetMap(id_package,playerID,mapStat);
@@ -419,8 +436,14 @@ int main()
 	{
 		if (GetBoard(id_package, mapStat, sheepStat))
 			break;
-
+		// hide other player's sheep number start
+		for (int i = 0; i < 12; i++)
+			for (int j = 0; j < 12; j++)
+				if (mapStat[i][j] != playerID)
+					sheepStat[i][j] = 0;
+		// hide other player's sheep number end 
 		std::vector<int> step = GetStep(playerID,mapStat,sheepStat);
 		SendStep(id_package, step);
 	}
+	// DON'T MODIFY ANYTHING IN THIS WHILE LOOP OR YOU WILL GET 0 POINT IN THIS QUESTION
 }
