@@ -1,4 +1,4 @@
-// g++ -o agent1_cpp.exe Sample.cpp -lws2_32
+// g++ -o team6_agent1.exe team6_agent1.cpp -lws2_32
 // team 6
 // 110550170 戚維凌
 // 110550034 孫承瑞
