@@ -92,9 +92,9 @@ std::vector<std::vector<int>> legalSteps(int playerID, int curPlayerID, std::vec
 					int y = i + dir_move[dir][1];
 					int x = j + dir_move[dir][0];
 					if ((x >= 0) && (x < boardSize) && (y >= 0) && (y < boardSize) && (mapStat[y][x] == 0)){ // walk through the direction until meet the wall or other player's sheep
-						for (int m = 1; m <= sheepNum - cnt; m++){ // split the sheep
-							legal_steps.push_back({i, j, m, dir});
-						}
+						// for (int m = 1; m <= sheepNum - cnt; m++){ // split the sheep
+						legal_steps.push_back({i, j, 1, dir});
+						// }
 					}
 				}
 			}
